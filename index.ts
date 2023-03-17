@@ -1,34 +1,46 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { ClientToServerEvents, ServerToClientEvents } from "./lib/types";
+import { joinSchema } from "./lib/schema";
+import * as crud from "./lib/crud";
 
 const httpServer = createServer();
-const io = new Server(httpServer);
-
-let queue = new Map<string, string>();
-let rooms = new Map<string, string>();
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
 
 io.on("connection", (socket) => {
   console.log("yay");
   //check if already in queue or in room
   // on leave chat
 
-  socket.on("join", ({ subject }) => {
-    const waitingSocketId = queue.get(subject);
+  socket.on("join", (args, callback) => {
+    const validated = joinSchema.safeParse(args);
+
+    if (!validated.success) {
+      return callback(validated.error.issues);
+    }
+
+    const { subject } = validated.data;
+    const waitingSocketId = crud.getWaitingSocket(subject);
     if (waitingSocketId) {
       const room = `${socket.id}-${waitingSocketId}-${subject.trim()}`;
       socket.join(room);
       io.sockets.sockets.get(waitingSocketId)?.join(room);
-      queue.delete(subject);
-      rooms.set(socket.id, room);
-      rooms.set(waitingSocketId, room);
+      crud.deleteFromQueueBySubject(subject);
+      crud.setRoomToSocket(socket.id, room);
+      crud.setRoomToSocket(waitingSocketId, room);
       io.to(room).emit("joined", { room });
     } else {
-      queue.set(subject, socket.id);
+      crud.setToQueue(socket.id, subject);
+      socket.emit("waiting");
     }
   });
 
   socket.on("message", ({ message }) => {
-    const room = rooms.get(socket.id);
+    const room = crud.getSocketRoom(socket.id);
     if (room) {
       socket.broadcast.to(room).emit("receive", { message });
     }
@@ -36,6 +48,7 @@ io.on("connection", (socket) => {
 
   // remove from queue/room on disconnect
   socket.on("disconnect", () => {
+    crud.deleteFromQueueBySocket(socket.id);
     console.log("nah");
   });
 });
