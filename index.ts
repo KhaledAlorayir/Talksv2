@@ -11,6 +11,10 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
   },
 });
 
+// leave chat
+// similkar topics
+// look around for bugs
+
 io.on("connection", (socket) => {
   console.log("yay");
   //check if already in queue or in room

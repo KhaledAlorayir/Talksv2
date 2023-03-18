@@ -33,6 +33,9 @@ const io = new socket_io_1.Server(httpServer, {
         origin: "http://localhost:3000",
     },
 });
+// leave chat
+// similkar topics
+// look around for bugs
 io.on("connection", (socket) => {
     console.log("yay");
     //check if already in queue or in room
