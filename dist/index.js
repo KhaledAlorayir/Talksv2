@@ -33,13 +33,8 @@ const io = new socket_io_1.Server(httpServer, {
         origin: "http://localhost:3000",
     },
 });
-// leave chat
-// similkar topics
-// look around for bugs
 io.on("connection", (socket) => {
     console.log("yay");
-    //check if already in queue or in room
-    // on leave chat
     socket.on("join", (args, callback) => {
         var _a;
         const validated = schema_1.joinSchema.safeParse(args);
@@ -66,6 +61,15 @@ io.on("connection", (socket) => {
         const room = crud.getSocketRoom(socket.id);
         if (room) {
             socket.broadcast.to(room).emit("receive", { message });
+        }
+    });
+    socket.on("leave", (callback) => {
+        const room = crud.getSocketRoom(socket.id);
+        if (room) {
+            socket.leave(room);
+            console.log("hit");
+            callback();
+            io.to(room).emit("alone");
         }
     });
     // remove from queue/room on disconnect

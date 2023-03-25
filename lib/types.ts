@@ -4,6 +4,7 @@ export interface ServerToClientEvents {
   joined: (args: { room: string }) => void;
   receive: (args: { message: string }) => void;
   waiting: () => void;
+  alone: () => void;
 }
 
 export interface ClientToServerEvents {
@@ -12,4 +13,5 @@ export interface ClientToServerEvents {
     validationCallback: (error: ZodIssue[]) => void
   ) => void;
   message: (args: { message: string }) => void;
+  leave: (callback: () => void) => void;
 }
