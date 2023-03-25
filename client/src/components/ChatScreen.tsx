@@ -12,6 +12,7 @@ import { socket } from "../lib/Socket";
 type props = {
   messages: Accessor<Message[]>;
   setMessages: Setter<Message[]>;
+  setIsJoined: Setter<boolean>;
 };
 
 const ChatScreen: Component<props> = (props) => {
@@ -23,6 +24,12 @@ const ChatScreen: Component<props> = (props) => {
     socket.emit("message", { message: message() });
     props.setMessages((prev) => [...prev, { content: message(), isMe: true }]);
     setMessage("");
+  }
+
+  function leaveHandler() {
+    socket.emit("leave", () => {
+      props.setIsJoined(false);
+    });
   }
 
   createEffect(() => {
@@ -53,7 +60,7 @@ const ChatScreen: Component<props> = (props) => {
           <button class="btn btn-secondary" type="submit">
             Send
           </button>
-          <button class="btn btn-error" type="button">
+          <button onClick={leaveHandler} class="btn btn-error" type="button">
             Leave
           </button>
         </form>
